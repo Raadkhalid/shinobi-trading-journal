@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAuth, countryCodes } from './AuthContext';
-import { Mail, Lock, User, Phone, MapPin, ArrowRight, AlertCircle, Loader2, Instagram, Trash2, HelpCircle, ChevronDown } from 'lucide-react';
+import { useAuth, countryCodes, supabase } from './AuthContext';
+import { Mail, Lock, User, Phone, MapPin, ArrowRight, AlertCircle, Loader2, Instagram, Trash2, HelpCircle, ChevronDown, Link2, Unlink } from 'lucide-react';
 import { isValidPhoneNumber as isValidPhoneNumberForRegion } from 'libphonenumber-js';
 
 const DELETE_REASONS = [
@@ -634,6 +634,56 @@ export const ProfileScreen = ({ onBack, onReplayTour, darkMode }) => {
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
 
+  const [ctrader, setCtrader] = useState({ loading: true, connected: false });
+  const [ctraderActionLoading, setCtraderActionLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      try {
+        const res = await fetch('/.netlify/functions/ctrader-status', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const body = await res.json();
+        if (!cancelled) setCtrader({ loading: false, ...body });
+      } catch {
+        if (!cancelled) setCtrader({ loading: false, connected: false });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleConnectCtrader = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const redirectUri = `${window.location.origin}/.netlify/functions/ctrader-callback`;
+    const params = new URLSearchParams({
+      client_id: process.env.REACT_APP_CTRADER_CLIENT_ID || '',
+      redirect_uri: redirectUri,
+      scope: 'accounts',
+      state: session.user.id,
+      product: 'web',
+    });
+    window.location.href = `https://id.ctrader.com/my/settings/openapi/grantingaccess/?${params.toString()}`;
+  };
+
+  const handleDisconnectCtrader = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    setCtraderActionLoading(true);
+    try {
+      await fetch('/.netlify/functions/ctrader-disconnect', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      setCtrader({ loading: false, connected: false });
+    } finally {
+      setCtraderActionLoading(false);
+    }
+  };
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteDetails, setDeleteDetails] = useState('');
@@ -770,6 +820,44 @@ export const ProfileScreen = ({ onBack, onReplayTour, darkMode }) => {
             </button>
           </div>
           
+          <div className={`mt-8 pt-8 border-t ${darkMode ? 'border-stone-800' : 'border-stone-200'}`}>
+            <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-stone-900'}`}>Broker Connections</h3>
+            <p className={`text-sm mb-4 ${darkMode ? 'text-stone-400' : 'text-stone-500'}`}>Connect cTrader to automatically log your closed trades - no manual import needed. New trades sync in every 15 minutes.</p>
+            {ctrader.loading ? (
+              <div className={`flex items-center justify-center py-4 ${darkMode ? 'text-stone-400' : 'text-stone-500'}`}>
+                <Loader2 className="w-5 h-5 animate-spin" />
+              </div>
+            ) : ctrader.connected ? (
+              <div className={`p-4 rounded-lg flex items-center justify-between gap-3 ${darkMode ? 'bg-stone-800/30' : 'bg-orange-50/60'}`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-green-500/15 flex items-center justify-center flex-shrink-0">
+                    <Link2 className="w-4.5 h-4.5 text-green-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-stone-900'}`}>cTrader Connected</p>
+                    <p className={`text-xs truncate ${darkMode ? 'text-stone-400' : 'text-stone-500'}`}>Account {ctrader.ctidTraderAccountId}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleDisconnectCtrader}
+                  disabled={ctraderActionLoading}
+                  className="flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-400 transition-colors disabled:opacity-50 flex-shrink-0"
+                >
+                  {ctraderActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unlink className="w-4 h-4" />}
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleConnectCtrader}
+                className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold transition-colors ${darkMode ? 'bg-stone-800 text-white hover:bg-stone-600' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'}`}
+              >
+                <Link2 className="w-5 h-5" />
+                Connect cTrader
+              </button>
+            )}
+          </div>
+
           <div className={`mt-8 pt-8 border-t ${darkMode ? 'border-stone-800' : 'border-stone-200'}`}>
             <button onClick={() => signOut()} className="w-full bg-red-50 text-red-600 py-3 rounded-lg font-semibold hover:bg-red-100 transition-colors">Sign Out</button>
           </div>
