@@ -1,0 +1,25 @@
+{
+  "short_name": "STJ",
+  "name": "Shinobi Trading Journal",
+  "description": "Track your trades with discipline and precision",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1a100a",
+  "background_color": "#0e0803"
+}

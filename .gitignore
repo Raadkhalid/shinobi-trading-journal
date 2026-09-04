@@ -1,0 +1,24 @@
+# dependencies
+/node_modules
+
+# production build
+/build
+
+# environment variables (never commit secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# netlify
+/.netlify
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
