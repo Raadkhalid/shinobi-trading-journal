@@ -1,11 +1,16 @@
 import React from 'react';
-import { Upload, TrendingUp, CalendarDays, Smartphone, BarChart3, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Upload, Link2, TrendingUp, CalendarDays, Smartphone, BarChart3, ShieldCheck, ArrowRight } from 'lucide-react';
 
 const FEATURES = [
   {
     icon: Upload,
     title: 'Import From Your Broker',
     description: 'Bring in trades straight from MT4 and MT5 statements or TradingView order logs - no manual re-typing every entry.',
+  },
+  {
+    icon: Link2,
+    title: 'Connect Your cTrader Account',
+    description: 'Link cTrader once and every closed trade logs itself automatically, every 15 minutes - no importing, no manual entry, ever.',
   },
   {
     icon: TrendingUp,
